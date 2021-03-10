@@ -46,6 +46,8 @@ class Room(object):
         elif self.mesh_type == 'horizontal':
             assert self.plane_height is not None
             self.mesh_z = self.plane_height * np.ones_like(self.mesh_x)
+        else:
+            raise ValueError('Mesh type %s is not defined.' % self.mesh_type)
 
         return self.mesh_x, self.mesh_y, self.mesh_z
 
