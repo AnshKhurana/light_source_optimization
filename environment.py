@@ -2,13 +2,14 @@
 from matplotlib import pyplot as plt
 import jax.numpy as np
 from jax import grad
+import numpy as onp # original numpy 
 
 class Room(object):
 
     def __init__(self, l, b, h,
         mesh_resolution=10, mesh_type='horizontal', plane_a=None,
         plane_b=None, plane_c=None, plane_d=None, plane_height=None,
-        objective_type='simple'):
+        objective_type='simple_min'):
         """Setup environment variables.
 
         Args:
@@ -96,4 +97,18 @@ class Room(object):
     def evaluate_gradient(self, bulb_positions):
         return self.objective_gradient(bulb_positions)
         
-     
+
+if __name__=='__main__':
+    room = Room(10, 15, 20, plane_height=5, objective_type='simple_std')
+    bulb_pos = onp.random.rand(5, 3) * 10
+    print("Init bulb pos: \n", bulb_pos)
+    grid_x, grid_y, grid_z = room.return_grid()
+
+    print("Grid Shape :")
+    print(grid_x.shape, grid_y.shape, grid_z.shape)
+
+    print("Obj at initial bulb position: ", room.objective_function(bulb_pos))
+    print("Obj gradient at initial position: \n", 
+        room.evaluate_gradient(bulb_pos))
+
+
