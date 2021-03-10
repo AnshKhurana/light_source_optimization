@@ -1,4 +1,7 @@
+"""Main script to run all components."""
 import argparse
+from algorithms import *
+from environment import Room
 
 parser = argparse.ArgumentParser()
 
@@ -8,3 +11,10 @@ parser.add_argument('--room_h', type=float, default=15)
 ...
 
 
+def optimise(args):
+    pass
+
+if __name__=='__main__':
+    args = parser.parse_args()
+
+    optimise(args)
