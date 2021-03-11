@@ -6,7 +6,7 @@ def test_obj(X):
     return np.linalg.norm(X - np.array([1.0, 2.0, 3.0]))**2
 
 
-def fletcher_reeves(J, grad, hessian, X_0=np.zeros(3), ε_a=1e-5, ε_r=1e-5, ε_g=1e-5):
+def fletcher_reeves(J, grad, hessian, X_0=np.zeros(3), ε_a=1e-6, ε_r=1e-6, ε_g=1e-6):
     """
     Fletcher Reeves Algorithm
     """
@@ -21,7 +21,7 @@ def fletcher_reeves(J, grad, hessian, X_0=np.zeros(3), ε_a=1e-5, ε_r=1e-5, ε_
         while k < 25:
             T = hessian(X) @ S
             G = grad(X)
-            dα = -(G @ T.T) / (T @ T.T) / 2
+            dα = -(G @ T.T) / (T @ T.T)
             if np.linalg.norm(dα*S, 2) < ε:
                 break
             α += dα
