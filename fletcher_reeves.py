@@ -1,17 +1,9 @@
 import jax.numpy as np
-from jax import grad
+from jax import grad, hessian
 
 
 def test_obj(X):
     return np.linalg.norm(X - np.array([1.0, 2.0, 3.0]))**2
-
-
-def test_grad(X):
-    return 2*(X - np.array([1.0, 2.0, 3.0]))
-
-
-def test_hessian(X):
-    return 2 * np.eye(3)
 
 
 def fletcher_reeves(J, grad, hessian, X_0=np.zeros(3), ε_a=1e-5, ε_r=1e-5, ε_g=1e-5):
@@ -19,20 +11,21 @@ def fletcher_reeves(J, grad, hessian, X_0=np.zeros(3), ε_a=1e-5, ε_r=1e-5, ε_
     Fletcher Reeves Algorithm
     """
 
-    def newtons_method(X_0, S, ε=1e-5):
+    def newtons_method(X_0, S, ε=1e-6):
         """
         Line Search using Modified Newton's Method
         """
         X = X_0
         k = 0
         α = 0
-        while k < 10:
+        while k < 25:
             T = hessian(X) @ S
             G = grad(X)
-            α += -(G @ T.T) / (T @ T.T) / 2
-            if np.linalg.norm(α*S, 2) < ε:
+            dα = -(G @ T.T) / (T @ T.T) / 2
+            if np.linalg.norm(dα*S, 2) < ε:
                 break
-            X = X + α * S
+            α += dα
+            X += dα * S
             k += 1
         return α
 
@@ -57,5 +50,5 @@ def fletcher_reeves(J, grad, hessian, X_0=np.zeros(3), ε_a=1e-5, ε_r=1e-5, ε_
 
 
 if __name__ == "__main__":
-    X = fletcher_reeves(test_obj, test_grad, test_hessian)
+    X = fletcher_reeves(test_obj, grad(test_obj), hessian(test_obj))
     print(X)
