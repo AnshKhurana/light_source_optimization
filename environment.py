@@ -1,15 +1,16 @@
 """Environment definition."""
 from matplotlib import pyplot as plt
 import jax.numpy as np
-from jax import grad
-import numpy as onp # original numpy 
+from jax import grad, hessian
+import numpy as onp  # original numpy
+
 
 class Room(object):
 
     def __init__(self, l, b, h,
-        mesh_resolution=10, mesh_type='horizontal', plane_a=None,
-        plane_b=None, plane_c=None, plane_d=None, plane_height=None,
-        objective_type='simple_min'):
+                 mesh_resolution=10, mesh_type='horizontal', plane_a=None,
+                 plane_b=None, plane_c=None, plane_d=None, plane_height=None,
+                 objective_type='simple_min'):
         """Setup environment variables.
 
         Args:
@@ -29,30 +30,29 @@ class Room(object):
         self.mesh_type = mesh_type
         self.objective_type = objective_type
         self.mesh_x, self.mesh_y, self.mesh_z = self.generate_mesh()
-        self.objective_gradient = grad(self.objective_function)
-        self.hessian = grad(self.objective_gradient)
+        self.gradient = grad(self.objective_function)
+        self.hessian = hessian(self.objective_function)
 
     def generate_mesh(self):
         self.mesh_x, self.mesh_y = np.meshgrid(
-                np.linspace(0, self.l, self.l*self.mesh_resolution),
-                np.linspace(0, self.b, self.b*self.mesh_resolution))
+            np.linspace(0, self.l, self.l*self.mesh_resolution),
+            np.linspace(0, self.b, self.b*self.mesh_resolution))
 
         if self.mesh_type == 'general':
             # TO-DO: meshgrid for generic plane given by the equation.
-            assert (self.plane_a is not None) and \
-                (self.plane_b is not None) and \
-                (self.plane_c is not None) and \
-                (self.plane_d is not None)
-            self.mesh_z = (self.plane_d - self.plane_a*self.mesh_x - 
-                            self.plane_b*self.mesh_y) / self.plane_c
+            assert self.plane_a is not None and \
+                   self.plane_b is not None and \
+                   self.plane_c is not None and \
+                   self.plane_d is not None
+            self.mesh_z = (self.plane_d - self.plane_a*self.mesh_x -
+                           self.plane_b*self.mesh_y) / self.plane_c
         elif self.mesh_type == 'horizontal':
             assert self.plane_height is not None
             self.mesh_z = self.plane_height * np.ones_like(self.mesh_x)
         else:
-            raise ValueError('Mesh type %s is not defined.' % self.mesh_type)
+            raise ValueError(f'Mesh type {self.mesh_type} is not defined.')
 
         return self.mesh_x, self.mesh_y, self.mesh_z
-
 
     def show_plane(self, bulb_positions):
         """Creates a 3D plot of the room, with placed bulbs and the
@@ -60,61 +60,46 @@ class Room(object):
         """
         pass
 
-
     def return_grid(self):
         return self.mesh_x, self.mesh_y, self.mesh_z
-
 
     def intensity_grid(self, bulb_positions):
         """
         Args:
             bulb_positions: (num_bulbs * 3) np array
         """
-
         num_bulbs = bulb_positions.shape[0]
         I = np.zeros_like(self.mesh_x)
-        
         for bi in range(num_bulbs):
-            I += 1 / ((bulb_positions[bi, 0]-self.mesh_x)**2+
-            (bulb_positions[bi, 1]-self.mesh_y)**2 +
-            (bulb_positions[bi, 2]-self.mesh_z)**2)
-        
+            I += 1 / ((bulb_positions[bi, 0]-self.mesh_x)**2 +
+                      (bulb_positions[bi, 1]-self.mesh_y)**2 +
+                      (bulb_positions[bi, 2]-self.mesh_z)**2)
         return I
 
     def objective_function(self, bulb_positions):
-        
-        I = self.intensity_grid(bulb_positions)
+        assert bulb_positions.ndim == 1
+        bulb_positions = bulb_positions.reshape(-1, 3)
 
+        I = self.intensity_grid(bulb_positions)
         if self.objective_type == 'simple_min':
-            obj = -1 * np.min(I)
+            obj = -np.min(I)
         elif self.objective_type == 'simple_std':
             obj = np.std(I)
         else:
-            raise NotImplementedError('Objective function %s is not defined.'
-        % self.objective_type)
-
+            raise NotImplementedError(
+                f'Objective function {self.objective_type} is not defined.')
         return obj
 
-    def evaluate_gradient(self, bulb_positions):
-        return self.objective_gradient(bulb_positions)
 
-    def evaluate_hessian(self, bulb_positions):
-        return self.hessian(bulb_positions)
-
-if __name__=='__main__':
-    room = Room(10, 15, 20, plane_height=5, objective_type='simple_std')
-    bulb_pos = onp.random.rand(5, 3) * 10
+if __name__ == '__main__':
+    room = Room(10, 15, 20, plane_height=5, objective_type='simple_min')
+    bulb_pos = onp.random.rand(5 * 3) * 10
     print("Init bulb pos: \n", bulb_pos)
     grid_x, grid_y, grid_z = room.return_grid()
-
     print("Grid Shape :")
     print(grid_x.shape, grid_y.shape, grid_z.shape)
-
     print("Obj at initial bulb position: ", room.objective_function(bulb_pos))
-    print("Obj gradient at initial position: \n", 
-        room.evaluate_gradient(bulb_pos))
-
-    print("Obj hessian at initial position: \n", 
-        room.evaluate_gradient(bulb_pos))
-
-
+    print("Obj gradient at initial position: \n",
+        room.gradient(bulb_pos))
+    print("Obj hessian at initial position: \n",
+        room.gradient(bulb_pos))
