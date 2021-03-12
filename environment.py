@@ -30,6 +30,7 @@ class Room(object):
         self.objective_type = objective_type
         self.mesh_x, self.mesh_y, self.mesh_z = self.generate_mesh()
         self.objective_gradient = grad(self.objective_function)
+        self.hessian = grad(self.objective_gradient)
 
     def generate_mesh(self):
         self.mesh_x, self.mesh_y = np.meshgrid(
@@ -96,7 +97,9 @@ class Room(object):
 
     def evaluate_gradient(self, bulb_positions):
         return self.objective_gradient(bulb_positions)
-        
+
+    def evaluate_hessian(self, bulb_positions):
+        return self.hessian(bulb_positions)
 
 if __name__=='__main__':
     room = Room(10, 15, 20, plane_height=5, objective_type='simple_std')
@@ -109,6 +112,9 @@ if __name__=='__main__':
 
     print("Obj at initial bulb position: ", room.objective_function(bulb_pos))
     print("Obj gradient at initial position: \n", 
+        room.evaluate_gradient(bulb_pos))
+
+    print("Obj hessian at initial position: \n", 
         room.evaluate_gradient(bulb_pos))
 
 
