@@ -184,7 +184,7 @@ class Roof:
         if self.objective_type == 'simple_min':
             obj = -np.min(I)
         elif self.objective_type == 'simple_std':
-            obj = np.std(I)
+            obj = np.std(I)**2
         else:
             raise NotImplementedError(
                 f'Objective function {self.objective_type} is not defined.')
