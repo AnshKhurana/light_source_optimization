@@ -22,7 +22,7 @@ def newtons_method(grad, hessian, x, s, n):
     return α
 
 
-def fletcher_reeves(J, grad, hessian, X_0, n_iter=1, ε_a=1e-6, ε_r=1e-6, ε_g=1e-6, verbose=False):
+def fletcher_reeves(J, grad, hessian, X_0, n_iter=1, ε_a=1e-6, ε_r=1e-6, ε_g=1e-4, verbose=False):
     """
     Fletcher Reeves Algorithm
     """
@@ -34,7 +34,7 @@ def fletcher_reeves(J, grad, hessian, X_0, n_iter=1, ε_a=1e-6, ε_r=1e-6, ε_g=
             print(k, X)
             print(np.linalg.norm(G, ord=float('inf')))
         if k == 0:
-            S = -G / np.linalg.norm(G, ord=2)
+            S = -G / np.linalg.norm(G, ord=float('inf'))
         else:
             β = G.T @ (G-G_old) / (G_old.T @ G_old)
             S = -G / np.linalg.norm(G, ord=float('inf')) + β*S_old
@@ -44,9 +44,8 @@ def fletcher_reeves(J, grad, hessian, X_0, n_iter=1, ε_a=1e-6, ε_r=1e-6, ε_g=
         if abs(J(X)-J(X_old)) <= ε_a + ε_r*abs(J(X_old))\
                 and np.linalg.norm(G, ord=float('inf')) <= ε_g:
             break
-        if np.abs(X-X_old).max() < 1e-6 or k > 200:
-            k = 0
-            X = random.rand(len(X))
+        if np.abs(X-X_old).max() < 1e-6:
+            break
     return X
 
 
