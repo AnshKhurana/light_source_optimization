@@ -19,6 +19,12 @@ def optimise(args):
     num_bulbs = 2
     x0 = onp.random.randn(2*num_bulbs)*2
 
+    # "Intuition" based symmetric initialization
+    if num_bulbs == 2:
+        tmp = 1 + 0.1 * onp.random.randn(2)
+        x0 = onp.hstack((tmp, -tmp))
+        x0 = np.array(x0)
+
     # SciPy Nelder Mead
     room = Roof(args.L, args.B, args.H, objective_type='simple_std')
     res = minimize(room.J, x0, method='nelder-mead',
@@ -37,10 +43,10 @@ def optimise(args):
                         room.gradient,
                         room.hessian,
                         x0, n_iter=1,
-                        verbose=True,
+                        # verbose=True,
                         )
-    print(f"\nMinima at\n{room.to_pos(x).round(2)}")
     print(f"\nMinimum Value = {room.J(x)}")
+    print(f"\nMinima at\n{room.to_pos(x).round(2)}")
 
 
 if __name__ == '__main__':
