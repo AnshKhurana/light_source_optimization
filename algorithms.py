@@ -29,10 +29,8 @@ def steepest_descent():
         # if np.abs(J - prev_J) > eps_a + eps_r * np.abs(prev_J) or np.linalg.norm(G) > eps_g:
         #     print("Converged!")
         #     break
-
         alpha = prev_alpha * (prev_G.T @ prev_G)/(G.T @ G)
         X += alpha*S
-
         prev_alpha = alpha
         prev_G = G
         prev_J = J

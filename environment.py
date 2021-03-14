@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import jax.numpy as np
 from jax import grad
 import numpy as onp # original numpy 
+from scipy.optimize import minimize
 
 class Room(object):
 
@@ -89,6 +90,8 @@ class Room(object):
             obj = -1 * np.min(I)
         elif self.objective_type == 'simple_std':
             obj = np.std(I)
+        elif self.objective_function == 'simple_penalty_min':
+            obj = -1*np.min(I) +(bulb_pos[:, 0]) 
         else:
             raise NotImplementedError('Objective function %s is not defined.'
         % self.objective_type)
@@ -101,12 +104,21 @@ class Room(object):
     def evaluate_hessian(self, bulb_positions):
         return self.hessian(bulb_positions)
 
-if __name__=='__main__':
+room = Room(10, 15, 20, plane_height=5, objective_type='simple_min')
+
+
+def room_scipy(bulb_position):
+
+    """The Rosenbrock function"""
+    bulb_position = np.reshape(bulb_position, (-1, 3))
+    return room.objective_function(bulb_position)
+
+
+if __name__=='abcd':
     room = Room(10, 15, 20, plane_height=5, objective_type='simple_std')
     bulb_pos = onp.random.rand(5, 3) * 10
     print("Init bulb pos: \n", bulb_pos)
     grid_x, grid_y, grid_z = room.return_grid()
-
     print("Grid Shape :")
     print(grid_x.shape, grid_y.shape, grid_z.shape)
 
@@ -117,4 +129,13 @@ if __name__=='__main__':
     print("Obj hessian at initial position: \n", 
         room.evaluate_gradient(bulb_pos))
 
+
+if __name__=='__main__':
+    bulb_pos = onp.array([[6, 8, 10], [2, 1, 3], [10, 10, 15]])
+    print("Init bulb pos: \n", bulb_pos)
+    
+    res = minimize(room_scipy, bulb_pos.ravel(), method='nelder-mead',
+               options={'xatol': 1e-10, 'disp': True})
+
+    print(np.reshape(res.x, (-1, 3)))
 
