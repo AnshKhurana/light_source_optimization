@@ -1,54 +1,60 @@
 import jax.numpy as np
 from jax import grad, hessian
+from numpy import random
 
 
-def test_obj(X):
-    return np.linalg.norm(X - np.array([1.0, 2.0, 3.0]))**2
+def rosen(x):
+    """The Rosenbrock function"""
+    return np.sum(100.0*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0)
 
 
-def fletcher_reeves(J, grad, hessian, X_0=np.zeros(3), ε_a=1e-6, ε_r=1e-6, ε_g=1e-6):
+def newtons_method(grad, hessian, x, s, n):
+    """
+    Line Search using Modified Newton's Method
+    """
+    α = 0
+    for _ in range(n):
+        G = grad(x)
+        T = hessian(x) @ s
+        dα = -(G @ T.T) / (T @ T.T)
+        α += dα
+        x += dα * s
+    return α
+
+
+def fletcher_reeves(J, grad, hessian, X_0, n_iter=1, ε_a=1e-6, ε_r=1e-6, ε_g=1e-4, verbose=False):
     """
     Fletcher Reeves Algorithm
     """
-
-    def newtons_method(X_0, S, ε=1e-6):
-        """
-        Line Search using Modified Newton's Method
-        """
-        X = X_0
-        k = 0
-        α = 0
-        while k < 25:
-            T = hessian(X) @ S
-            G = grad(X)
-            dα = -(G @ T.T) / (T @ T.T)
-            if np.linalg.norm(dα*S, 2) < ε:
-                break
-            α += dα
-            X += dα * S
-            k += 1
-        return α
-
     X = X_0
     k = 0
     while True:
         G = grad(X)
+        if verbose:
+            print(k, X)
+            print(np.linalg.norm(G, ord=float('inf')))
         if k == 0:
-            S = -G / np.linalg.norm(G, 2)
+            S = -G / np.linalg.norm(G, ord=float('inf'))
         else:
-            β = G.T @ G / (G_old.T @ G_old)
-            S = -G / np.linalg.norm(G, 2) + β*S_old
-        G_old, S_old = G, S
-        α = newtons_method(X, S)
-        X_old = X
-        X += α * S
+            β = G.T @ (G-G_old) / (G_old.T @ G_old)
+            S = -G / np.linalg.norm(G, ord=float('inf')) + β*S_old
+        X_old, G_old, S_old = X, G, S
+        X += newtons_method(grad, hessian, X, S, n_iter) * S
         k += 1
         if abs(J(X)-J(X_old)) <= ε_a + ε_r*abs(J(X_old))\
-                and np.linalg.norm(G, 2) <= ε_g:
+                and np.linalg.norm(G, ord=float('inf')) <= ε_g:
+            break
+        if np.abs(X-X_old).max() < 1e-6:
             break
     return X
 
 
 if __name__ == "__main__":
-    X = fletcher_reeves(test_obj, grad(test_obj), hessian(test_obj))
+    X_0 = np.array([2.0, 2.0, 0.5])
+    X = fletcher_reeves(rosen,
+                        grad(rosen),
+                        hessian(rosen),
+                        X_0, ε_a=1e-5,
+                        ε_r=1e-5, ε_g=1e-4,
+                        verbose=True)
     print(X)
