@@ -16,7 +16,8 @@ parser.add_argument('-H', type=float, default=15)
 
 
 def optimise(args):
-    num_bulbs = 2
+    onp.random.seed(42)
+    num_bulbs = 5
     x0 = onp.random.randn(2*num_bulbs)*2
 
     # "Intuition" based symmetric initialization
@@ -26,10 +27,10 @@ def optimise(args):
         x0 = np.array(x0)
 
     # SciPy Nelder Mead
-    room = Roof(args.L, args.B, args.H, objective_type='simple_std')
-    res = minimize(room.J, x0, method='nelder-mead',
-                   options={'xatol': 1e-10, 'disp': True})
-    print(f"Minima at\n{room.to_pos(res.x).round(2)}")
+    # room = Roof(args.L, args.B, args.H, objective_type='simple_std')
+    # res = minimize(room.J, x0, method='nelder-mead',
+    #                options={'xatol': 1e-8, 'disp': True})
+    # print(f"Minima at\n{room.to_pos(res.x).round(2)}")
 
     # SciPy Conjugate Gradient
     room = Roof(args.L, args.B, args.H, objective_type='simple_std')
@@ -43,7 +44,7 @@ def optimise(args):
                         room.gradient,
                         room.hessian,
                         x0, n_iter=1,
-                        # verbose=True,
+                        verbose=True,
                         )
     print(f"\nMinimum Value = {room.J(x)}")
     print(f"\nMinima at\n{room.to_pos(x).round(2)}")
