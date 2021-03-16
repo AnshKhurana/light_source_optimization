@@ -14,13 +14,14 @@ class Room:
     def __init__(self, l, b, h,
                  mesh_resolution=10, mesh_type='horizontal', plane_a=None,
                  plane_b=None, plane_c=None, plane_d=None, plane_height=None,
-                 obj_weight=None,
+                 obj_weight=None, transform=False,
                  objective_type='simple_min'):
         """Setup environment variables.
 
         Args:
             mesh_resolution: # points per unit length
             mesh_type: 'horizontal' or 'general'
+            transform: Apply sigmoid to positions to ensure location is alright
         """
         self.l = l
         self.b = b
@@ -36,6 +37,7 @@ class Room:
         self.mesh_resolution = mesh_resolution
         self.mesh_type = mesh_type
         self.objective_type = objective_type
+        self.transform = transform
         self.mesh_x, self.mesh_y, self.mesh_z = self.generate_mesh()
         self.J = self.objective_function
         self.obj_weight = obj_weight
@@ -69,18 +71,45 @@ class Room:
         """
         if bulb_positions.ndim == 1:
             bulb_positions = self.to_pos(bulb_positions)
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
+
+        fig = plt.figure(figsize=(10, 4))
+
+        # Plot for Positions
+        fig.suptitle('Visualisation  of Room.')
+        ax = fig.add_subplot(1, 2, 1, projection='3d')
         ax.set_xlabel('l')
         ax.set_ylabel('b')
         ax.set_zlabel('h')
         ax.set_xlim(0, self.l)
         ax.set_ylim(0, self.b)
         ax.set_zlim(0, self.h)
-
+        ax.set_title('bulb_positions')
         ax.scatter(bulb_positions[:, 0], bulb_positions[:, 1],
                    bulb_positions[:, 2], marker='^', c='r')
-        surf = ax.plot_surface(self.mesh_x, self.mesh_y, self.mesh_z)
+        ax.plot_surface(self.mesh_x, self.mesh_y, self.mesh_z)
+
+        # Plot for intensities
+        ax = fig.add_subplot(1, 2, 2)
+        I = self.intensity_grid(bulb_positions)
+        # im = ax.contourf(self.mesh_x, self.mesh_y, I, cmap='jet')
+        ax.scatter(bulb_positions[:, 0]*self.mesh_resolution,
+                   bulb_positions[:, 1]*self.mesh_resolution,
+                   marker='x', c='r')
+        im = ax.imshow(I)
+        fig.colorbar(im)
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        plt.show()
+
+    def show_itensity(self, bulb_positions):
+        if bulb_positions.ndim == 1:
+            bulb_positions = self.to_pos(bulb_positions)
+
+        I = self.intensity_grid(bulb_positions)
+        plt.imshow(I)
+        # plt.contourf(self.mesh_x, self.mesh_y, I, cmap='jet')
+        plt.colorbar()
         plt.show()
 
     def return_grid(self):
@@ -99,10 +128,19 @@ class Room:
                         (bulb_positions[bi, 2]-self.mesh_z)**2)
         return I
 
-    def to_pos(self, x):
+    def sigmoid_reshape(self, x):
         pos = 1 / (1 + np.exp(-x))
         pos = pos.reshape(-1, 3) * self.center * 2
         return pos
+
+    def to_pos(self, x):
+        if self.transform:
+            return self.sigmoid_reshape(x)
+        else:
+            return self.simple_reshape(x)
+
+    def simple_reshape(self, x):
+        return x.reshape(-1, 3)
 
     def objective_function(self, x):
         assert x.ndim == 1
@@ -239,6 +277,7 @@ def test_scipy():
 
 if __name__ == '__main__':
     room = Room(10, 15, 20, plane_height=5, objective_type='simple_min')
+    # bulb_pos = onp.array([6, 8, 10, 2, 1, 3, 10, 10, 15], dtype=float)
     bulb_pos = onp.random.rand(5 * 3) * 10
     print("Init bulb pos: \n", bulb_pos)
     grid_x, grid_y, grid_z = room.return_grid()
