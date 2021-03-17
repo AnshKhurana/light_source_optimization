@@ -14,7 +14,7 @@ class Room:
     def __init__(self, l, b, h,
                  mesh_resolution=10, mesh_type='horizontal', plane_a=None,
                  plane_b=None, plane_c=None, plane_d=None, plane_height=None,
-                 obj_weight=None, transform=False,
+                 obj_weight=None, transform=False, intensity_constant=100,
                  objective_type='simple_min'):
         """Setup environment variables.
 
@@ -40,6 +40,7 @@ class Room:
         self.transform = transform
         self.mesh_x, self.mesh_y, self.mesh_z = self.generate_mesh()
         self.J = self.objective_function
+        self.intensity_constant = intensity_constant
         self.obj_weight = obj_weight
         self.gradient = grad(self.objective_function)
         self.hessian = hessian(self.objective_function)
@@ -123,7 +124,7 @@ class Room:
         num_bulbs = bulb_positions.shape[0]
         I = np.zeros_like(self.mesh_x)
         for bi in range(num_bulbs):
-            I += 100 / ((bulb_positions[bi, 0]-self.mesh_x)**2 +
+            I += self.intensity_constant / ((bulb_positions[bi, 0]-self.mesh_x)**2 +
                         (bulb_positions[bi, 1]-self.mesh_y)**2 +
                         (bulb_positions[bi, 2]-self.mesh_z)**2)
         return I
@@ -149,7 +150,7 @@ class Room:
         if self.objective_type == 'simple_min':
             obj = -np.min(I)
         elif self.objective_type == 'simple_std':
-            obj = np.std(I)
+            obj = np.std(I)**2
         elif self.objective_function == 'simple_penalty_min':
             obj = -1*np.min(I) +(bulb_pos[:, 0]) 
         elif self.objective_function == 'simple_combined':
@@ -278,7 +279,7 @@ def test_scipy():
 if __name__ == '__main__':
     room = Room(10, 15, 20, plane_height=5, objective_type='simple_min')
     # bulb_pos = onp.array([6, 8, 10, 2, 1, 3, 10, 10, 15], dtype=float)
-    bulb_pos = onp.random.rand(5 * 3) * 10
+    bulb_pos = onp.random.rand(5 * 3) * 10.
     print("Init bulb pos: \n", bulb_pos)
     grid_x, grid_y, grid_z = room.return_grid()
     room.show_plane(bulb_pos)
