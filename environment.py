@@ -193,7 +193,6 @@ class Roof:
         self.gradient = grad(self.objective_function)
         self.hessian = hessian(self.objective_function)
 
-
     def generate_mesh(self):
         self.mesh_x, self.mesh_y = np.meshgrid(
             np.linspace(0, self.l, self.l*self.mesh_resolution),

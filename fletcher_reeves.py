@@ -41,7 +41,8 @@ def fletcher_reeves(J, grad, hessian, X_0, n_iter=1, ε_a=1e-6, ε_r=1e-6, ε_g=
         X_old, G_old, S_old = X, G, S
         X += newtons_method(grad, hessian, X, S, n_iter) * S
         k += 1
-        if abs(J(X)-J(X_old)) <= ε_a + ε_r*abs(J(X_old))\
+        J_old = J(X_old)
+        if abs(J(X)-J_old) <= ε_a + ε_r*abs(J_old)\
                 and np.linalg.norm(G, ord=float('inf')) <= ε_g:
             break
         if np.abs(X-X_old).max() < 1e-6:
