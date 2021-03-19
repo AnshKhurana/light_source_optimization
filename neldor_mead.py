@@ -39,26 +39,25 @@ def nelder_mead(func, xj, c=1, epsilon=10e-6, alpha=1., gamma=2., beta=-0.5, del
 		fw=func(xw)
 		fb=func(xb)
 		fl=func(xl)
-		xa= np.mean(np.asarray(simp[0:-1]),axis=0)
-		xr= xa + alpha*(xa-xw)
-
+		xa= np.mean(np.asarray(simp[0:-1]),axis=0) #centroid
+		xr= xa + alpha*(xa-xw) #reflection
 		fr=func(xr)
 		if fb<=fr < fl:
-			simp[-1]=xr
+			simp[-1]=xr  #accept reflection
 		elif fr< fb:
-			xe= xa + gamma*(xa-xw)
-			fe=func(xe)
-			if fe<fr:
-				simp[-1]=xe
+			xe= xa + gamma*(xa-xw)  #expansion
+			fe=func(xe)     
+			if fe<fr: 
+				simp[-1]=xe        #accept expansion
 			else:
-				simp[-1]=xr
+				simp[-1]=xr        #accept reflection
 		else:
 			xc= xa + beta*(xa-xw)
-			fc=func(xc)
+			fc=func(xc)            #contraction
 			if fc<fw:
-				simp[-1]=xc
+				simp[-1]=xc        #accept contraction
 			else:
-				simp= [xb + delta*(x-xb) for x in simp]
+				simp= [xb + delta*(x-xb) for x in simp] #shrink the simplex
 	return xb,fb
 
 
@@ -70,7 +69,7 @@ if __name__ == "__main__":
 	xj = (np.array([3,7,7])).reshape(-1)
 	def f(xw):
 		return room.objective_function(xw)
-		
+
 	print(nelder_mead(f,xj))
 
 
