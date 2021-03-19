@@ -143,6 +143,7 @@ class Room:
         return x.reshape(-1, 3)
 
     def objective_function(self, x):
+
         assert x.ndim == 1
         bulb_positions = self.to_pos(x)
         I = self.intensity_grid(bulb_positions)
