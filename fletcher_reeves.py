@@ -22,7 +22,8 @@ def newtons_method(grad, hessian, x, s, n):
     return α
 
 
-def fletcher_reeves(J, grad, hessian, X_0, n_iter=1, ε_a=1e-6, ε_r=1e-6, ε_g=1e-4, verbose=False):
+def fletcher_reeves(J, grad, hessian, X_0, n_iter=1, ε_a=1e-6,
+                    ε_r=1e-6, ε_g=1e-4, verbose=False):
     """
     Fletcher Reeves Algorithm
     """
@@ -47,7 +48,7 @@ def fletcher_reeves(J, grad, hessian, X_0, n_iter=1, ε_a=1e-6, ε_r=1e-6, ε_g=
             break
         if np.abs(X-X_old).max() < 1e-6:
             break
-    return X
+    return X, k
 
 
 if __name__ == "__main__":
