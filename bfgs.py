@@ -1,8 +1,11 @@
-import jax.numpy as np
-# import numpy as np
+import jax.numpy as jnp
+import numpy as np
 from jax import grad, hessian
 import scipy.optimize as sopt
 from golden_search import gss
+from environment import Room, Roof
+from scipy.optimize import minimize
+
 
 def test_obj(X):
     return np.linalg.norm(X - np.array([1.0, 2.0, 3.0]))**2
@@ -14,13 +17,13 @@ def rosen(x):
     """The Rosenbrock function"""
     return np.sum(100.0*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0)
 
-def bfgs(obj, grad, X_0, eps_a=1e-3, eps_r=1e-3, eps_g=1e-4, num_itr=500):
+def bfgs(obj, grad, hessian, X_0, eps_a=1e-3, eps_r=1e-3, eps_g=1e-4, num_itr=500):
 
     X = X_0
-    # B_inv_prev = 2 * np.eye(3)
-    H = hessian(rosen)
-    B_inv_prev = H(X)
-    print(B_inv_prev)
+    B_inv_prev = hessian(X_0)
+    # H = hessian(rosen)
+    # B_inv_prev = H(X)
+    # print(B_inv_prev)
     # B_prev = None
     G = grad(X)
 
@@ -133,7 +136,19 @@ if __name__ == "__main__":
 
     # X = np.array([1, 1, 1])
     # print(np.linalg.norm(X)**2)
-    bfgs(rosen, grad(rosen), np.array([0.0, 0.0]))
+    np.random.seed(42)
+    num_bulbs = 3
+    x0 = np.random.randn(2 * num_bulbs) * 2
+
+    room = Roof(10, 15, 10, objective_type='simple_std')
+    room.show_plane(x0)
+    res = minimize(room.J, x0, jac=room.gradient,
+                   method='BFGS', options={'disp': True})
+    room.show_plane(res)
+    print(f"Minima at\n{room.to_pos(res.x).round(2)}")
+
+
+    bfgs(room.J, room.gradient, room.hessian, x0)
 
 
 # X_0 = np.array([10.0, -3.0, 0.0])
