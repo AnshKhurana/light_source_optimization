@@ -14,7 +14,7 @@ class Room:
     def __init__(self, l, b, h,
                  mesh_resolution=10, mesh_type='horizontal', plane_a=None,
                  plane_b=None, plane_c=None, plane_d=None, plane_height=None,
-                 obj_weight=None, transform=False,
+                 obj_weight=None, transform=False, intensity_constant=100,
                  objective_type='simple_min'):
         """Setup environment variables.
 
@@ -40,6 +40,7 @@ class Room:
         self.transform = transform
         self.mesh_x, self.mesh_y, self.mesh_z = self.generate_mesh()
         self.J = self.objective_function
+        self.intensity_constant = intensity_constant
         self.obj_weight = obj_weight
         self.gradient = grad(self.objective_function)
         self.hessian = hessian(self.objective_function)
@@ -123,7 +124,7 @@ class Room:
         num_bulbs = bulb_positions.shape[0]
         I = np.zeros_like(self.mesh_x)
         for bi in range(num_bulbs):
-            I += 100 / ((bulb_positions[bi, 0]-self.mesh_x)**2 +
+            I += self.intensity_constant / ((bulb_positions[bi, 0]-self.mesh_x)**2 +
                         (bulb_positions[bi, 1]-self.mesh_y)**2 +
                         (bulb_positions[bi, 2]-self.mesh_z)**2)
         return I
@@ -150,12 +151,12 @@ class Room:
         if self.objective_type == 'simple_min':
             obj = -np.min(I)
         elif self.objective_type == 'simple_std':
-            obj = np.std(I)
+            obj = np.std(I)**2
         elif self.objective_function == 'simple_penalty_min':
             obj = -1*np.min(I) +(bulb_pos[:, 0]) 
         elif self.objective_function == 'simple_combined':
             assert self.obj_weight is not None
-            obj = self.obj_weight * np.std(I) + (self.obj_weight - 1) * np.min(I)
+            obj = self.obj_weight * (np.std(I)**2) + (self.obj_weight - 1) * np.min(I)
         else:
             raise NotImplementedError(
                 f'Objective function {self.objective_type} is not defined.')
@@ -167,7 +168,7 @@ class Roof:
     def __init__(self, l, b, h,
                  mesh_resolution=10, mesh_type='horizontal', plane_a=None,
                  plane_b=None, plane_c=None, plane_d=None, plane_height=None,
-                 objective_type='simple_min'):
+                 objective_type='simple_min', obj_weight=None):
         """Setup environment variables.
 
         Args:
@@ -188,11 +189,11 @@ class Roof:
         self.mesh_resolution = mesh_resolution
         self.mesh_type = mesh_type
         self.objective_type = objective_type
+        self.obj_weight = obj_weight
         self.mesh_x, self.mesh_y, self.mesh_z = self.generate_mesh()
         self.J = self.objective_function
         self.gradient = grad(self.objective_function)
         self.hessian = hessian(self.objective_function)
-
 
     def generate_mesh(self):
         self.mesh_x, self.mesh_y = np.meshgrid(
@@ -219,7 +220,40 @@ class Roof:
         """Creates a 3D plot of the room, with placed bulbs and the
         target plane.
         """
-        pass
+        if bulb_positions.ndim == 1:
+            bulb_positions = self.to_pos(bulb_positions)
+        heights = np.array([[self.h] * bulb_positions.shape[0]])
+        bulb_pos = np.hstack([bulb_positions, heights.T])
+        print(bulb_pos)
+        fig = plt.figure(figsize=(10, 4))
+
+        # Plot for Positions
+        fig.suptitle('Visualisation  of Room.')
+        ax = fig.add_subplot(1, 2, 1, projection='3d')
+        ax.set_xlabel('l')
+        ax.set_ylabel('b')
+        ax.set_zlabel('h')
+        ax.set_xlim(0, self.l)
+        ax.set_ylim(0, self.b)
+        ax.set_zlim(0, self.h)
+        ax.set_title('bulb_positions')
+        ax.scatter(bulb_pos[:, 0], bulb_pos[:, 1],
+                   bulb_pos[:, 2], marker='^', c='r')
+        ax.plot_surface(self.mesh_x, self.mesh_y, self.mesh_z)
+
+        # Plot for intensities
+        ax = fig.add_subplot(1, 2, 2)
+        I = self.intensity_grid(bulb_pos)
+        # im = ax.contourf(self.mesh_x, self.mesh_y, I, cmap='jet')
+        ax.scatter(bulb_pos[:, 0]*self.mesh_resolution,
+                   bulb_pos[:, 1]*self.mesh_resolution,
+                   marker='x', c='r')
+        im = ax.imshow(I)
+        fig.colorbar(im)
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        plt.show()
 
     def return_grid(self):
         return self.mesh_x, self.mesh_y, self.mesh_z
@@ -238,6 +272,7 @@ class Roof:
         return I
 
     def to_pos(self, x):
+        # print(type(x), x)
         pos = 1 / (1 + np.exp(-x))
         pos = pos.reshape(-1, 2) * self.center * 2
         return pos
@@ -250,6 +285,9 @@ class Roof:
             obj = -np.min(I)
         elif self.objective_type == 'simple_std':
             obj = np.std(I)**2
+        elif self.objective_type == 'simple_combined':
+            assert self.obj_weight is not None
+            obj = self.obj_weight * (np.std(I)**2) + (self.obj_weight - 1) * np.min(I)
         else:
             raise NotImplementedError(
                 f'Objective function {self.objective_type} is not defined.')
@@ -279,7 +317,7 @@ def test_scipy():
 if __name__ == '__main__':
     room = Room(10, 15, 20, plane_height=5, objective_type='simple_min')
     # bulb_pos = onp.array([6, 8, 10, 2, 1, 3, 10, 10, 15], dtype=float)
-    bulb_pos = onp.random.rand(5 * 3) * 10
+    bulb_pos = onp.random.rand(5 * 3) * 10.
     print("Init bulb pos: \n", bulb_pos)
     grid_x, grid_y, grid_z = room.return_grid()
     room.show_plane(bulb_pos)
