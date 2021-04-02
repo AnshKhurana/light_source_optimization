@@ -36,9 +36,9 @@ def bfgs(obj, grad, hessian, X_0, eps_a=1e-3, eps_r=1e-3, eps_g=1e-4, num_itr=50
             break
 
         p = -(B_inv_prev @ G)
-        # alpha = sopt.golden(lambda t: obj(X + t*p))
-        alpha = gss(obj, X, p)
-        print(alpha)
+        alpha = sopt.golden(lambda t: obj(X + t*p))
+        # alpha = gss(obj, X, p)
+        # print(alpha)
         # alpha, _, _ = strongwolfe(obj, grad, p, X, obj(X), grad(X))
         s = alpha * p
         X_next = X + s
@@ -49,11 +49,12 @@ def bfgs(obj, grad, hessian, X_0, eps_a=1e-3, eps_r=1e-3, eps_g=1e-4, num_itr=50
         # print(sy)
         second = ((sy + y.T @ B_inv_prev @ y)/(sy*sy))*(s @ s.T)
         third = ((B_inv_prev @ y @ s.T) + (s @ (y.T @ B_inv_prev)))/sy
-        B_inv = B_inv_prev + second - third
+        B_inv_prev = B_inv_prev + second - third
 
-        B_inv_prev = B_inv
         X = X_next
         G = G_next
+
+    return X
 
 
 def strongwolfe(myFx, grad,d,x0,fx0,gx0):
@@ -142,13 +143,17 @@ if __name__ == "__main__":
 
     room = Roof(10, 15, 10, objective_type='simple_std')
     room.show_plane(x0)
-    res = minimize(room.J, x0, jac=room.gradient,
-                   method='BFGS', options={'disp': True})
-    room.show_plane(res)
-    print(f"Minima at\n{room.to_pos(res.x).round(2)}")
+    # res = minimize(room.J, x0, jac=room.gradient,
+    #                method='BFGS', options={'disp': True})
+    # print("results: ", res)
+    # room.show_plane(res.x)
+    # print(f"Minima at\n{room.to_pos(res.x).round(2)}")
 
 
-    bfgs(room.J, room.gradient, room.hessian, x0)
+    X = bfgs(room.J, room.gradient, room.hessian, x0)
+    room.show_plane(X)
+    print(f"Minima at\n{room.to_pos(X).round(2)}")
+
 
 
 # X_0 = np.array([10.0, -3.0, 0.0])
