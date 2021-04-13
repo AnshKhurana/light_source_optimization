@@ -156,7 +156,6 @@ if __name__ == "__main__":
     np.random.seed(2)
     num_bulbs = 3
     x0 = np.random.randn(2 * num_bulbs) * 2
-
     room = Roof(10, 15, 20, plane_height=5, objective_type='simple_std')
     room.show_plane(x0)
     # res = minimize(room.J, x0, jac=room.gradient,
