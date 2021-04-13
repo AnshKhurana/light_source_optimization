@@ -1,10 +1,12 @@
 import jax.numpy as jnp
 import numpy as np
 from jax import grad, hessian
+from numpy.core.numeric import ones_like
 import scipy.optimize as sopt
 from golden_search import gss
 from environment import Room, Roof
 from scipy.optimize import minimize
+from fletcher_reeves import newtons_method
 
 
 def test_obj(X):
@@ -13,20 +15,22 @@ def test_obj(X):
 def test_grad(X):
     return 2*(X - np.array([1.0, 2.0, 3.0]))
 
+
 def rosen(x):
     """The Rosenbrock function"""
     return np.sum(100.0*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0)
 
-def bfgs(obj, grad, hessian, X_0, eps_a=1e-3, eps_r=1e-3, eps_g=1e-4, num_itr=500):
+
+def bfgs(obj, grad, hessian, X_0, eps_a=1e-12, eps_r=1e-16, eps_g=1e-6, num_itr=500):
 
     X = X_0
-    B_inv_prev = hessian(X_0)
+    B_inv_prev = np.linalg.pinv(hessian(X_0))
     # H = hessian(rosen)
-    # B_inv_prev = H(X)
+    # B_inv_prev = H(X)s
     # print(B_inv_prev)
     # B_prev = None
     G = grad(X)
-
+    alpha_min = 1e-8
     for i in range(num_itr):
 
         print("Itr", i, "X", X, "obj function", obj(X), "gradient", G)
@@ -36,12 +40,24 @@ def bfgs(obj, grad, hessian, X_0, eps_a=1e-3, eps_r=1e-3, eps_g=1e-4, num_itr=50
             break
 
         p = -(B_inv_prev @ G)
-        alpha = sopt.golden(lambda t: obj(X + t*p))
+        # alpha = sopt.golden(lambda t: obj(X + t*p), maxiter=1000)
+        # alpha = sopt.line_search(obj, grad, X, p, maxiter=1000000)
+        alpha = newtons_method(grad, hessian, X, p, 10)
+        
+        # alpha = max(alpha, alpha_min)
         # alpha = gss(obj, X, p)
         # print(alpha)
         # alpha, _, _ = strongwolfe(obj, grad, p, X, obj(X), grad(X))
         s = alpha * p
         X_next = X + s
+        lhs = np.abs(room.objective_function(X) - room.objective_function(X_next))
+        rhs = eps_r*room.objective_function(X)
+        print('conv check: ', lhs, rhs)
+        if lhs < rhs:
+            print("converged")
+            break
+
+        print("Itr", i, "X_next", X_next, "alpha", alpha, "p", p)
 
         G_next = grad(X_next)
         y = G_next - G
@@ -137,23 +153,29 @@ if __name__ == "__main__":
 
     # X = np.array([1, 1, 1])
     # print(np.linalg.norm(X)**2)
-    np.random.seed(42)
+    np.random.seed(2)
     num_bulbs = 3
     x0 = np.random.randn(2 * num_bulbs) * 2
 
-    room = Roof(10, 15, 10, objective_type='simple_std')
+    room = Roof(10, 15, 20, plane_height=5, objective_type='simple_std')
     room.show_plane(x0)
     # res = minimize(room.J, x0, jac=room.gradient,
     #                method='BFGS', options={'disp': True})
     # print("results: ", res)
     # room.show_plane(res.x)
     # print(f"Minima at\n{room.to_pos(res.x).round(2)}")
+    algo = 'bfgs'
+    if algo == 'bfgs':
+        X = bfgs(room.objective_function, room.gradient, room.hessian, x0)
+        room.show_plane(X)
+        print(f"Minima at\n{room.to_pos(X).round(2)}")
+    elif algo == 'scipy_bfgs':
+        res = minimize(room.objective_function, x0, jac=room.gradient, method='BFGS') 
+        room.show_plane(res.x)
+        print(res)
+        print(f"Minima at\n{room.to_pos(res.x).round(2)}")
 
-
-    X = bfgs(room.J, room.gradient, room.hessian, x0)
-    room.show_plane(X)
-    print(f"Minima at\n{room.to_pos(X).round(2)}")
-
+    
 
 
 # X_0 = np.array([10.0, -3.0, 0.0])
