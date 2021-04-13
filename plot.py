@@ -29,13 +29,13 @@ def save_combined(val_ours, val_scipy, x, title, xtitle, ytitle, save_name):
     plt.close()
 
 
-num_bulbs = 6
+num_bulbs = 4
 x = list(range(1, 11))
 # [SciPy_nm, SciPy_cg, FR, SciPy_nm_nit, SciPy_cg_nit, FR_nit, SciPy_nm_time, SciPy_cg_time, FR_time] = pkl.load( open('5bulbs_25-35.pkl','rb'))
-el1 = pkl.load( open('6bulbs_15-20.pkl','rb'))
-el2 = pkl.load( open('6bulbs_50-55.pkl','rb'))
+el1 = pkl.load( open('data/nelder_mead/4bulbs.pkl','rb'))
+# el2 = pkl.load( open('6bulbs_50-55.pkl','rb'))
 
-[SciPy_nm, SciPy_cg, FR, SciPy_nm_nit, SciPy_cg_nit, FR_nit, SciPy_nm_time, SciPy_cg_time, FR_time] = [x1+x2 for (x1, x2) in zip(el1, el2)]
+[SciPy_cg, FR, SciPy_cg_nit, FR_nit, SciPy_cg_time, FR_time] = el1
 
 # print(len(SciPy_cg))
 
@@ -82,4 +82,4 @@ def plot_gamma_variation():
     pass
 
 if __name__ == '__main__':
-    plot_niter_variation()
+    plot_values()
