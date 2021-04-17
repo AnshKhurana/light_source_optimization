@@ -343,18 +343,19 @@ class Rosenbrock:
         return mesh_x, mesh_y
 
     def show_plane(self, current_pos):
-        fig = plt.figure(figsize=(5, 5))
+        fig = plt.figure(figsize=(6, 5))
         Z = self.intensity_grid()
         ctr = plt.contour(self.mesh_x1, self.mesh_x2, Z, 50)
         plt.colorbar(ctr)
         plt.scatter(current_pos[0],
                     current_pos[1],
-                    marker='x', c='r')
+                    marker='x', c='r', zorder=2)
         plt.scatter(1,
                     1,
                     marker='o', c='b')
         plt.xlabel('x1')
         plt.ylabel('x2') 
+        plt.title('Visualisation of the Rosenbrock function in %d to %d range' % (self.plot_min_x1, self.plot_max_x1))
         plt.show()
     
 

@@ -2,11 +2,11 @@
 import argparse
 import jax.numpy as np
 import numpy as onp
-
-from environment import Room, Roof
+import time
+from environment import Room, Roof, Rosenbrock
 from fletcher_reeves import fletcher_reeves
 from steepest_descent import steepest_descent
-# from nelder_mead import neldor_mead
+from neldor_mead import nelder_mead
 from scipy.optimize import minimize
 
 parser = argparse.ArgumentParser()
@@ -18,8 +18,9 @@ parser.add_argument('--num_bulbs', type=int, default=3)
 parser.add_argument('--algorithm', type=str, default='steepest_descent')
 parser.add_argument('--obj_weight', type=float, default=1.0)
 parser.add_argument('--obj_function', type=str, default='simple_combined')
-
-
+parser.add_argument('--random_seed', type=int, default=42)
+parser.add_argument('--environment', type=str, default='rosen')
+parser.add_argument('--vis', action='store_true')
 
 
 def optimise_on_roof(args):
@@ -65,6 +66,74 @@ def optimise_on_roof(args):
     room.show_plane(x)
 
 
+def one_call(args):
+    onp.random.seed(args.random_seed)
+    if args.environment == 'rosen':
+        ix1 = -5 + onp.random.rand()*10
+        ix2 = -5 + onp.random.rand()*10
+        x0 = np.array([ix1, ix2])
+        room = Rosenbrock()        
+    else:
+        num_bulbs = args.num_bulbs
+        x0 = onp.random.randn(2 * num_bulbs)*2
+        # "Intuition" based symmetric initialization
+        if num_bulbs == 2:
+            tmp = 1 + 0.1 * onp.random.randn(2)
+            x0 = onp.hstack((tmp, -tmp))
+            x0 = np.array(x0)
+
+        room = Roof(args.L, args.B, args.H, objective_type=args.obj_function,
+                obj_weight=args.obj_weisght)
+        
+    if args.vis:
+        room.show_plane(x0)
+
+    print(f"Initialisation\n{x0.round(2)}")
+    print('Initial value: ', room.J(x0))
+    start_time = time.time()
+    if args.algorithm == 'scipy_cg':
+        res = minimize(room.J, x0, jac=room.gradient,
+                   method='CG', options={'disp': True})
+    elif args.algorithm == 'scipy_bfgs':
+        res = minimize(room.J, x0, method='BFGS', jac=room.gradient,
+               options={'disp': True})
+    elif args.algorithm == 'scipy_nelder_mead':
+        res = minimize(room.J, x0, method='nelder-mead',
+               options={'xatol': 1e-8, 'disp': True})
+    elif args.algorithm == 'fletcher_reeves':
+        x, count = fletcher_reeves(room.J,
+                        room.gradient,
+                        room.hessian,
+                        x0, n_iter=1,
+                        verbose=False,
+                        )
+    elif args.algorithm == 'nelder_mead':
+        x, count = nelder_mead(room.J, x0)
+    elif args.algorithm == 'bfgs':
+        pass
+    else:
+        raise NotImplementedError('Algorithms %s is not implemented.'
+                                  % args.algorithm)
+    
+    runtime = time.time()
+    runtime = runtime - start_time
+
+    if args.algorithm.startswith('scipy'):
+        final_x = res.x
+        n_iter = res.nit
+        final_obj = res.fun
+    else:
+        final_x = x
+        n_iter = count
+        final_obj = float(room.J(x))
+
+    if args.vis:
+        room.show_plane(final_x)
+
+    print(f"Minima at\n{final_x.round(2)}")
+
+    return runtime, n_iter, final_obj, final_x
+
 def optimise_on_room(args):
 
     # Intialise X
@@ -88,4 +157,7 @@ def optimise_on_room(args):
  
 if __name__ == '__main__':
     args = parser.parse_args()
-    optimise_on_roof(args)
+    runtime, n_iter, final_obj, final_x = one_call(args)
+    print('\nResults')
+    print('Final Obj Value: %f\nRuntime: %fs\nNumber of iterations: %d' % (final_obj, runtime, n_iter))
+    print('Minima at :', final_x)
