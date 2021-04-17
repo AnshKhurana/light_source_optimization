@@ -83,7 +83,7 @@ def one_call(args):
             x0 = np.array(x0)
 
         room = Roof(args.L, args.B, args.H, objective_type=args.obj_function,
-                obj_weight=args.obj_weisght)
+                obj_weight=args.obj_weight)
         
     if args.vis:
         room.show_plane(x0)
