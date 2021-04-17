@@ -29,6 +29,9 @@ def steepest_descent(X_0, alpha_0, obj_fn=test_obj, grad_fn=test_grad,
         # if np.abs(J - prev_J) > eps_a + eps_r * np.abs(prev_J) or np.linalg.norm(G) > eps_g:
         #     print("Converged!")
         #     break
+        if np.linalg.norm(G) < eps_g:
+            print("converged")
+            break
 
         alpha = prev_alpha * (prev_G.T @ prev_G)/(G.T @ G)
         X += alpha*S
@@ -45,4 +48,4 @@ if __name__ == "__main__":
     X_0 = np.array([0.0, 0.0, 0.0])
     alpha_0 = 1e-2 * np.ones(3)
     print(np.linalg.norm(X0)**2)
-    steepest_descent(X_0, alpha_0, num_itr=128)
+    steepest_descent(X_0, alpha_0, num_itr=2000)
