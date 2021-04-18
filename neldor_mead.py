@@ -83,20 +83,20 @@ def nelder_mead(func, xj, c=1, epsilon=10e-8, alpha=1., gamma=2., beta=-0.5, del
 
 if __name__ == "__main__":
 
-	num_bulbs=3
+	num_bulbs=5
 	np.random.seed(42)
 	xj = np.random.randn(2 * num_bulbs)*2
 
 	room = Roof(20, 10, 7, plane_height=5, objective_type='simple_std')
 	
 	room.show_plane(xj)
-	print(room.objective_function(xj))
 	# def f(xw):
 	# 	return room.objective_function(xw)
 
 	ans = nelder_mead(room.objective_function, xj)
 	# ans = minimize(room.objective_function, xj, method='Nelder-Mead')
 	print(ans)
+	print("VAlue",room.objective_function(ans[0]))
 	room.show_plane(ans[0])
 
 
