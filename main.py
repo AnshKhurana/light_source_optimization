@@ -8,6 +8,9 @@ from fletcher_reeves import fletcher_reeves
 from steepest_descent import steepest_descent
 from neldor_mead import nelder_mead
 from scipy.optimize import minimize
+from gradient_descent import SGD
+from gradient_descent_torch import torch_SGD
+import torch
 
 parser = argparse.ArgumentParser()
 
@@ -17,7 +20,7 @@ parser.add_argument('-H', type=float, default=15)
 parser.add_argument('--num_bulbs', type=int, default=3)
 parser.add_argument('--algorithm', type=str, default='steepest_descent')
 parser.add_argument('--obj_weight', type=float, default=1.0)
-parser.add_argument('--obj_function', type=str, default='simple_combined')
+parser.add_argument('--obj_function', type=str, default='simple_std')
 parser.add_argument('--random_seed', type=int, default=42)
 parser.add_argument('--environment', type=str, default='rosen')
 parser.add_argument('--vis', action='store_true')
@@ -71,8 +74,19 @@ def one_call(args):
     if args.environment == 'rosen':
         ix1 = -5 + onp.random.rand()*10
         ix2 = -5 + onp.random.rand()*10
-        x0 = np.array([ix1, ix2])
-        room = Rosenbrock()        
+        x0 = onp.array([ix1, ix2])
+        room = Rosenbrock()
+    # elif: args.environment == 'torch_env':
+    #     num_bulbs = args.num_bulbs
+    #     x0 = onp.random.randn(2 * num_bulbs)*2
+    #     # "Intuition" based symmetric initialization
+    #     if num_bulbs == 2:
+    #         tmp = 1 + 0.1 * onp.random.randn(2)
+    #         x0 = onp.hstack((tmp, -tmp))
+    #         x0 = np.array(x0)
+
+    #     room = Roof(args.L, args.B, args.H, objective_type=args.obj_function,
+    #             obj_weight=args.obj_weight)    
     else:
         num_bulbs = args.num_bulbs
         x0 = onp.random.randn(2 * num_bulbs)*2
@@ -109,8 +123,20 @@ def one_call(args):
                         )
     elif args.algorithm == 'nelder_mead':
         x, count = nelder_mead(room.J, x0)
-    elif args.algorithm == 'bfgs':
-        pass
+    elif args.algorithm == 'gradient_descent':
+        if args.environment != 'rosen':
+            x, count = SGD(x0, room.objective_function, room.gradient)
+        else:
+            x, count = SGD(x0, room.objective_function, room.gradient) #TODO: [kushal] add parameters according to rosen
+    elif args.algorithm == 'gradient_descent_torch':
+        if args.environment != 'rosen':
+            x0 = torch.FloatTensor(x0).view(-1,2)
+            x0.requires_grad = True
+            x, count = torch_SGD(x0, room, room.objective_function, iters=20000, lr=0.03)
+        else:
+            x0 = torch.FloatTensor(x0)
+            x0.requires_grad = True
+            x, count = torch_SGD(x0, room, room.objective_function, iters=20000, lr=1e-4, rosen_=1)
     else:
         raise NotImplementedError('Algorithms %s is not implemented.'
                                   % args.algorithm)

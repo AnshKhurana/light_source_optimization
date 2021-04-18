@@ -20,8 +20,8 @@ def signal_handler(sig, frame):
 	print('You pressed Ctrl+C!')
 	sys.exit(0)
 
-signal.signal(signal.SIGINT, signal_handler)
-print('Press Ctrl+C')
+# signal.signal(signal.SIGINT, signal_handler)
+# print('Press Ctrl+C')
 
 
 
@@ -39,8 +39,8 @@ def rosen(X):
 	return a*a + b*b*100.
 
 
-def SGD(func, gradient,alpha=0.01, momentum=0.9, epsilon=1e-6):
-	global xj
+def SGD(xj, func, gradient,alpha=0.01, momentum=0.9, epsilon=1e-6):
+	# global xj
 	velocity=np.zeros_like(xj)
 	r1=gradient(xj)
 	print(r1,xj)
@@ -56,13 +56,13 @@ def SGD(func, gradient,alpha=0.01, momentum=0.9, epsilon=1e-6):
 		# xj-=alpha*r1
 		r1=gradient(xj)
 		i+=1
-	return xj
+	return xj, i
 
 
 
 if __name__ == "__main__":	
 	print(room.objective_function(xj))
-	ans = SGD(room.objective_function, room.gradient)
+	ans, _ = SGD(xj, room.objective_function, room.gradient)
 	room.show_plane(ans)
 
 
