@@ -5,7 +5,7 @@ import numpy as onp
 import time
 from main import one_call
 import pickle as pkl
-from plot import save_plot
+from plot import save_plot, save_combined
 parser = argparse.ArgumentParser()
 from experiment import get_save_string
 
@@ -22,6 +22,7 @@ parser.add_argument('--environment', type=str, default='rosen')
 parser.add_argument('--experiment_name', type=str, default='seed_range')
 parser.add_argument('--vis', action='store_true')
 parser.add_argument('--save_dir', type=str, default='data/')
+parser.add_argument('--plot_type', type=str, default='one')
 
 
 def make_plot_one_seed_range(args):
@@ -40,6 +41,41 @@ def make_plot_one_seed_range(args):
             'Seeds', metric, save_plot_name)
         print('Metric %s:' % metric, results[metric])
     print('Metric %s:' % 'final_x', results['final_x'])
+
+scipy_algo_name = {
+    'fletcher_reeves' : 'scipy_cg',
+    'gradient_descent': 'gradient_descent_torch',
+    'nelder_mead' : 'scipy_nelder_mead'
+    }
+
+def make_plot_comparison(args):
+    base_algo = args.algorithm
+    scipy_algo = scipy_algo_name[base_algo]
+    our_save_string = get_save_string(args)
+    args.algorithm = scipy_algo
+    scipy_save_string = get_save_string(args)
+    
+    metrics = ['final_obj', 'n_iter', 'runtime']
+    x_range = list(range(args.seed_min, args.seed_max))
+
+    with open(our_save_string, 'rb') as f:
+        our_results = pkl.load(f)
+    
+    with open(scipy_save_string, 'rb') as f:
+        scipy_results = pkl.load(f)
+    
+    for metric in metrics:
+        save_plot_name = our_save_string.replace('.pkl', '_%s_comparison.png' % metric)        
+        save_combined(val_ours=onp.around(our_results[metric], 3), val_scipy=onp.around(scipy_results[metric], 3),
+                        x=x_range, title='%s comparison for %s on %s problem.' % (metric, args.algorithm, args.environment),
+                        xtitle='Seeds', ytitle=metric, save_name=save_plot_name)
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
-    make_plot_one_seed_range(args)
+    if args.plot_type == 'one':
+        make_plot_one_seed_range(args)
+    elif args.plot_type == 'comparison':
+        make_plot_comparison(args)
+    else:
+        raise NotImplementedError('%s plot type not implemented.' % args.plot_type)
