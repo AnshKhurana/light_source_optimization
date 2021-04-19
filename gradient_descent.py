@@ -13,6 +13,7 @@ num_bulbs=5
 onp.random.seed(42)
 xj = onp.random.randn(2 * num_bulbs)*2
 room = Roof(10, 20, 15, plane_height=5, objective_type='simple_std')
+from pypapi import events, papi_high as high
 
 
 
@@ -38,12 +39,14 @@ def rosen(X):
 
 def SGD(xj, func, gradient,alpha=0.03, momentum=0.9,
 		epsilon=1e-6, num_iters=20000):
-	# global xj
+# global xjee
+	
 	velocity=np.zeros_like(xj)
 	r1=gradient(xj)
 	print(r1,xj)
 	i=0
 	while np.linalg.norm(r1) > epsilon and i<num_iters:
+		high.start_counters([events.PAPI_FP_OPS,])
 		if i%100==0:
 			pass
 			# print(i,func(xj),np.linalg.norm(r1))
@@ -52,6 +55,8 @@ def SGD(xj, func, gradient,alpha=0.03, momentum=0.9,
 		# xj-=alpha*r1
 		r1=gradient(xj)
 		i+=1
+		fl = high.stop_counters()
+		print('fl: ', fl)
 	return xj, i
 
 

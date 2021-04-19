@@ -3,9 +3,12 @@ from math import sqrt
 from environment import Roof
 import copy
 from scipy.optimize import minimize
+from pypapi import events, papi_high as high
 
 
-def nelder_mead(func, xj, c=1, epsilon=10e-8, alpha=1., gamma=2., beta=-0.5, delta=0.5,simp_type='proportional'):
+
+def nelder_mead(func, xj, c=1, epsilon=10e-8, alpha=1., gamma=2.,
+ 			beta=-0.5, delta=0.5,simp_type='proportional'):
 	n=len(xj)
 	def simplex(x0):
 		nonzdelt = 0.05
