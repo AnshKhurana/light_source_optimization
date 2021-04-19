@@ -78,7 +78,7 @@ def rosen(X):
 	b = y - x*x
 	return a*a + b*b*100.
 
-def torch_SGD(xj, func, iters, lr,momentum=0.9):
+def torch_SGD(xj, room, func, iters, lr,momentum=0.9, rosen_=0):
 	# global xj
 	optim = torch.optim.SGD([xj], lr=lr,momentum=momentum)
 	errors = []
@@ -86,10 +86,10 @@ def torch_SGD(xj, func, iters, lr,momentum=0.9):
 	for it in tqdm(range(iters)):
 		count +=1
 		optim.zero_grad()
-		# if rosen_==1:
-		# 	J = rosen(xj)
-		# else:
-		J = objective_function(room,xj)
+		if rosen_==1:
+			J = rosen(xj)
+		else:
+			J = objective_function(room,xj)
 		J.backward()
 		if torch.norm(xj.grad) < 1e-6:
 			break

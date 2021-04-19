@@ -38,7 +38,7 @@ def optimise(args,s):
     xj = torch.FloatTensor(x0).view(num_bulbs,2)
     xj.requires_grad = True
     start = time.time()
-    res, nit = torch_SGD(xj,room.objective_function, iters=2000, lr=0.03,momentum=0.9)
+    res, nit = torch_SGD(xj,room,room.objective_function, iters=2000, lr=0.03,momentum=0.9)
     end = time.time()
     
     SciPy_cg.append(room.J(res))

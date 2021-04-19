@@ -44,6 +44,7 @@ def SGD(xj, func, gradient,alpha=0.03, momentum=0.9, epsilon=1e-6, num_iters=200
 	i=0
 	while np.linalg.norm(r1) > epsilon and i<num_iters:
 		if i%100==0:
+			pass
 			print(i,func(xj),np.linalg.norm(r1))
 		velocity = momentum*velocity -alpha*r1
 		xj= xj + velocity
