@@ -125,9 +125,9 @@ def one_call(args):
         x, count = nelder_mead(room.J, x0)
     elif args.algorithm == 'gradient_descent':
         if args.environment != 'rosen':
-            x, count = SGD(x0, room.objective_function, room.gradient)
+            x, count = SGD(x0, room.objective_function, room.gradient, num_iters=20000, epsilon=1e-7)
         else:
-            x, count = SGD(x0, room.objective_function, room.gradient, alpha=0.00007) #TODO: [kushal] add parameters according to rosen
+            x, count = SGD(x0, room.objective_function, room.gradient, alpha=0.00008, num_iters=30000) #TODO: [kushal] add parameters according to rosen
     elif args.algorithm == 'gradient_descent_torch':
         if args.environment != 'rosen':
             x0 = torch.FloatTensor(x0).view(-1,2)

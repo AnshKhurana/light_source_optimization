@@ -1,7 +1,6 @@
 import jax.numpy as np
 from jax import grad, hessian
 from numpy import random
-from pypapi import events, papi_high as high
 
 
 

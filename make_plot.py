@@ -6,7 +6,12 @@ import time
 from main import one_call
 import pickle as pkl
 from plot import save_plot, save_combined
+from scipy.spatial.distance import directed_hausdorff as conv_distance
+from sympy.utilities.iterables import multiset_permutations
+from environment import Roof
+
 parser = argparse.ArgumentParser()
+
 from experiment import get_save_string
 
 parser.add_argument('-L', type=float, default=10)
@@ -15,7 +20,7 @@ parser.add_argument('-H', type=float, default=15)
 parser.add_argument('--num_bulbs', type=int, default=3)
 parser.add_argument('--algorithm', type=str, default='scipy_cg')
 parser.add_argument('--obj_weight', type=float, default=1.0)
-parser.add_argument('--obj_function', type=str, default='simple_combined')
+parser.add_argument('--obj_function', type=str, default='simple_std')
 parser.add_argument('--seed_min', type=int, default=1)
 parser.add_argument('--seed_max', type=int, default=11)
 parser.add_argument('--environment', type=str, default='rosen')
@@ -69,7 +74,57 @@ def make_plot_comparison(args):
         save_combined(val_ours=onp.around(our_results[metric], 3), val_scipy=onp.around(scipy_results[metric], 3),
                         x=x_range, title='%s comparison for %s on %s problem.' % (metric, args.algorithm, args.environment),
                         xtitle='Seeds', ytitle=metric, save_name=save_plot_name)
+        print(metric, 'mean', 'ours', onp.mean(our_results[metric]), 'scipy', onp.mean(scipy_results[metric]))
+        print(metric, 'std', 'ours', onp.std(our_results[metric]), 'scipy', onp.std(scipy_results[metric]))
 
+def make_plot_distance(args):
+    room = Roof(args.L, args.B, args.H, objective_type=args.obj_function,
+                obj_weight=args.obj_weight)
+    base_algo = args.algorithm
+    scipy_algo = scipy_algo_name[base_algo]
+    our_save_string = get_save_string(args)
+    args.algorithm = scipy_algo
+    scipy_save_string = get_save_string(args)
+    
+    x_range = list(range(args.seed_min, args.seed_max))
+
+    with open(our_save_string, 'rb') as f:
+        our_results = pkl.load(f)
+    
+    with open(scipy_save_string, 'rb') as f:
+        scipy_results = pkl.load(f)
+    
+    metric = 'final_x'
+    val_ours = onp.around(our_results[metric], 3)
+    val_scipy = onp.around(scipy_results[metric], 3)
+
+    distance_vec = []
+    for set1, set2 in zip(val_ours, val_scipy):
+        set1 = onp.array(room.to_pos(set1))
+        set2 = onp.array(room.to_pos(set2))
+        set1 = set1.reshape(5, 2)
+        set2 = set2.reshape(5, 2)
+        # print(set1, set2)
+        # dist = conv_distance(set1, set2)
+        # print(dist)
+        # distance_vec.append(dist[0])
+        min_dist = np.inf
+        indices = np.arange(5, dtype=int)
+        for x in multiset_permutations(indices):
+            set2perm = set2[x]
+            print(set1, '\n', set2perm)
+            dist = np.sqrt(np.linalg.norm(set1-set2perm))
+            min_dist = min(min_dist, dist)
+            print(dist, min_dist)
+            
+        distance_vec.append(min_dist)
+
+    save_plot_name = our_save_string.replace('.pkl', '_%s_distance.png' % metric)        
+    print(distance_vec)
+    save_plot(distance_vec, x_range, 
+            '%s for %s on %s problem.' % (metric, args.algorithm, args.environment),
+                'Seeds', metric, save_plot_name)
+    print('Metric %s:' % 'Distance', distance_vec)
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -77,5 +132,7 @@ if __name__ == '__main__':
         make_plot_one_seed_range(args)
     elif args.plot_type == 'comparison':
         make_plot_comparison(args)
+    elif args.plot_type == 'distance':
+        make_plot_distance(args)
     else:
         raise NotImplementedError('%s plot type not implemented.' % args.plot_type)

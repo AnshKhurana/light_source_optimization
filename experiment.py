@@ -44,6 +44,8 @@ def run_on_seed_range(args):
     save_string = get_save_string(args)
     check_and_make_dir(save_string)
 
+    # seed_list = [manually_chosen_seed_list]
+
     for seed in range(args.seed_min, args.seed_max):
         # change seed
         args.random_seed = seed

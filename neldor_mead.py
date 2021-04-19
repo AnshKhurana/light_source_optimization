@@ -3,7 +3,6 @@ from math import sqrt
 from environment import Roof
 import copy
 from scipy.optimize import minimize
-from pypapi import events, papi_high as high
 
 
 
