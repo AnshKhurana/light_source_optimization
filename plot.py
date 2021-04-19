@@ -82,4 +82,4 @@ def plot_gamma_variation():
     pass
 
 if __name__ == '__main__':
-    plot_values()
+    plot_runtime()

@@ -1,8 +1,7 @@
 import numpy as onp
 from environment import Roof
 import torch
-import signal
-from gradient_descent import signal_handler
+
 from tqdm import tqdm
 # signal.signal(signal.SIGINT, signal_handler)
 
@@ -10,7 +9,7 @@ num_bulbs=5
 onp.random.seed(42)
 xj = torch.FloatTensor(onp.random.randn(2 * num_bulbs)*2).view(num_bulbs,2)
 xj.requires_grad = True
-room = Roof(20, 10, 7, plane_height=5, objective_type='simple_std')
+room = Roof(10, 20, 15, plane_height=5, objective_type='simple_std')
 # import pdb; pdb.set_trace()
 
 def to_pos(room,x):
@@ -79,18 +78,18 @@ def rosen(X):
 	b = y - x*x
 	return a*a + b*b*100.
 
-def torch_SGD(xj, room, func, iters, lr, rosen_=0):
+def torch_SGD(xj, func, iters, lr,momentum=0.9):
 	# global xj
-	optim = torch.optim.SGD([xj], lr=lr,momentum=0.9)
+	optim = torch.optim.SGD([xj], lr=lr,momentum=momentum)
 	errors = []
 	count = 0
 	for it in tqdm(range(iters)):
 		count +=1
 		optim.zero_grad()
-		if rosen_==1:
-			J = rosen(xj)
-		else:
-			J = objective_function(room,xj)
+		# if rosen_==1:
+		# 	J = rosen(xj)
+		# else:
+		J = objective_function(room,xj)
 		J.backward()
 		if torch.norm(xj.grad) < 1e-6:
 			break
@@ -104,5 +103,6 @@ if __name__ == "__main__":
 	print(xj)
 	# room.show_plane(xj.clone().detach().cpu().numpy())
 	print(room.objective_function(xj.clone().detach().cpu().numpy()))
-	ans, _ = torch_SGD(xj, room, room.objective_function, iters=20000, lr=0.03)
+	ans, _ = torch_SGD(xj,room.objective_function, iters=20000, lr=0.03,momentum=0.9)
+	print(" ", room.objective_function(ans))
 	room.show_plane(ans)

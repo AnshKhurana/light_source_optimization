@@ -12,13 +12,10 @@ import sys
 num_bulbs=5
 onp.random.seed(42)
 xj = onp.random.randn(2 * num_bulbs)*2
-room = Roof(20, 10, 7, plane_height=5, objective_type='simple_std')
+room = Roof(10, 20, 15, plane_height=5, objective_type='simple_std')
 
 
-def signal_handler(sig, frame):
-	room.show_plane(xj)
-	print('You pressed Ctrl+C!')
-	sys.exit(0)
+
 
 # signal.signal(signal.SIGINT, signal_handler)
 # print('Press Ctrl+C')
@@ -39,18 +36,15 @@ def rosen(X):
 	return a*a + b*b*100.
 
 
-def SGD(xj, func, gradient,alpha=0.01, momentum=0.9, epsilon=1e-6):
+def SGD(xj, func, gradient,alpha=0.03, momentum=0.9, epsilon=1e-6, num_iters=20000):
 	# global xj
 	velocity=np.zeros_like(xj)
 	r1=gradient(xj)
 	print(r1,xj)
 	i=0
-	while np.linalg.norm(r1) > epsilon:
+	while np.linalg.norm(r1) > epsilon and i<num_iters:
 		if i%100==0:
-			print(func(xj),np.linalg.norm(r1))
-			alpha-=0.001
-		if alpha<0:
-			break
+			print(i,func(xj),np.linalg.norm(r1))
 		velocity = momentum*velocity -alpha*r1
 		xj= xj + velocity
 		# xj-=alpha*r1
