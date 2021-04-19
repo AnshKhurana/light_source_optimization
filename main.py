@@ -127,7 +127,7 @@ def one_call(args):
         if args.environment != 'rosen':
             x, count = SGD(x0, room.objective_function, room.gradient)
         else:
-            x, count = SGD(x0, room.objective_function, room.gradient) #TODO: [kushal] add parameters according to rosen
+            x, count = SGD(x0, room.objective_function, room.gradient, alpha=0.01) #TODO: [kushal] add parameters according to rosen
     elif args.algorithm == 'gradient_descent_torch':
         if args.environment != 'rosen':
             x0 = torch.FloatTensor(x0).view(-1,2)
