@@ -118,7 +118,7 @@ def one_call(args):
         x, count = fletcher_reeves(room.J,
                         room.gradient,
                         room.hessian,
-                        x0, n_iter=1,
+                        x0, n_iter=3,
                         verbose=False,
                         )
     elif args.algorithm == 'nelder_mead':
@@ -127,7 +127,7 @@ def one_call(args):
         if args.environment != 'rosen':
             x, count = SGD(x0, room.objective_function, room.gradient)
         else:
-            x, count = SGD(x0, room.objective_function, room.gradient, alpha=0.0007) #TODO: [kushal] add parameters according to rosen
+            x, count = SGD(x0, room.objective_function, room.gradient, alpha=0.00007) #TODO: [kushal] add parameters according to rosen
     elif args.algorithm == 'gradient_descent_torch':
         if args.environment != 'rosen':
             x0 = torch.FloatTensor(x0).view(-1,2)
@@ -136,7 +136,7 @@ def one_call(args):
         else:
             x0 = torch.FloatTensor(x0)
             x0.requires_grad = True
-            x, count = torch_SGD(x0, room, room.objective_function, iters=20000, lr=0.0007,rosen_=1)
+            x, count = torch_SGD(x0, room, room.objective_function, iters=20000, lr=0.0001,rosen_=1)
     else:
         raise NotImplementedError('Algorithms %s is not implemented.'
                                   % args.algorithm)

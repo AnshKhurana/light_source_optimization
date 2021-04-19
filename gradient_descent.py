@@ -36,7 +36,8 @@ def rosen(X):
 	return a*a + b*b*100.
 
 
-def SGD(xj, func, gradient,alpha=0.03, momentum=0.9, epsilon=1e-6, num_iters=20000):
+def SGD(xj, func, gradient,alpha=0.03, momentum=0.9,
+		epsilon=1e-6, num_iters=20000):
 	# global xj
 	velocity=np.zeros_like(xj)
 	r1=gradient(xj)
@@ -45,7 +46,7 @@ def SGD(xj, func, gradient,alpha=0.03, momentum=0.9, epsilon=1e-6, num_iters=200
 	while np.linalg.norm(r1) > epsilon and i<num_iters:
 		if i%100==0:
 			pass
-			print(i,func(xj),np.linalg.norm(r1))
+			# print(i,func(xj),np.linalg.norm(r1))
 		velocity = momentum*velocity -alpha*r1
 		xj= xj + velocity
 		# xj-=alpha*r1
